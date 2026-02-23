@@ -9,6 +9,10 @@
 - [x] Artifact Registry 저장소 생성 (`fastapi`)
 - [x] Cloud Run 수동 배포 완료
 - [x] `GET /` 실동작 확인
+- [x] 에이전트 규칙 문서 추가 (`AGENTS.md`)
+- [x] 시작/부트스트랩/WIF 문서 골격 추가
+- [x] `README.md`에 10분 Quickstart 섹션 추가
+- [x] GitHub 원격 `main` 동기화 완료
 
 ## 진행 중 / 다음 작업
 
