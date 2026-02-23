@@ -108,7 +108,7 @@ gcloud iam workload-identity-pools providers describe "$WIF_PROVIDER" \
   - 트리거: `pull_request_target` (`opened`, `reopened`, `synchronize`, `ready_for_review`)
   - 역할: 같은 저장소 브랜치 PR에 auto-merge(squash) 예약
 - `deploy.yml`
-  - 트리거: `push` to `main`
+  - 트리거: `push` to `main` 또는 `pull_request_target(closed)` with merged
   - 역할: OIDC 인증 후 이미지 빌드/푸시 및 Cloud Run 배포
 
 ## 8) 동작 검증

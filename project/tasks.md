@@ -29,6 +29,7 @@
 
 - [ ] `deploy-cloud-run` 인증 실패 원인 수정 후 end-to-end 성공 검증
   - run id `22314120424`: `WIF_PROVIDER`/`WIF_SERVICE_ACCOUNT` 미설정으로 auth 단계 실패
+  - `deploy.yml` merged PR(closed) 트리거 보강 후 실제 배포 실행 여부 확인 필요
 - [ ] `/healthz` 404 원인 분석 및 수정
 - [ ] Cloud Build `PERMISSION_DENIED` 원인 확정(권한/조직정책)
 - [ ] Cloud SQL + Secret Manager + `/db/healthz` 200 검증(3단계)

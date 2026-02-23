@@ -133,7 +133,7 @@ gcloud run deploy "${SERVICE_NAME}" \
 - `.github/workflows/auto-merge.yml`
   - 같은 저장소 브랜치 PR에 대해 auto-merge(squash) 활성화
 - `.github/workflows/deploy.yml`
-  - `main` 브랜치 push(= 머지 완료) 시 Cloud Run 배포
+  - `main` push 또는 `main` 대상 PR merge(closed) 시 Cloud Run 배포
 
 GitHub 저장소에서 아래 설정을 먼저 적용하세요.
 

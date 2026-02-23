@@ -1,6 +1,6 @@
 # Session Handoff
 
-작성시각: 2026-02-24 01:06:27 KST
+작성시각: 2026-02-24 01:11:02 KST
 
 ## 1) 지금 바로 알아야 할 상태
 
@@ -15,8 +15,9 @@
     - `ci-pr.yml`
     - `auto-merge.yml`
     - `deploy.yml` (배포 전용)
-  - 머지 PR: `https://github.com/krnomad/vibe-gcp-github-template/pull/1`
-  - 머지 커밋: `040141fa87d47ff82925ee390737c7ba43ccb6c4`
+  - 머지 PR: `https://github.com/krnomad/vibe-gcp-github-template/pull/1`, `https://github.com/krnomad/vibe-gcp-github-template/pull/2`
+  - 최근 머지 커밋: `820aebf98f718ce863027bf08e9d6182e863c17f`
+  - 후속 작업 브랜치: `docs/pipeline-check-name-and-e2e-status` (`deploy.yml` merged PR 트리거 보강 포함)
 
 ## 2) 엔드포인트 확인 결과
 
@@ -44,6 +45,7 @@ gcloud run services describe fastapi-backend --region asia-northeast3 --project 
 
 ## 5) 다음 작업 우선순위
 
-1. GitHub Secrets 설정(`WIF_PROVIDER`, `WIF_SERVICE_ACCOUNT`) 후 `deploy-cloud-run` 재실행
-2. `/healthz` 404 원인 분석/수정
-3. Cloud SQL 연동 후 `/db/healthz`를 200으로 전환
+1. `docs/pipeline-check-name-and-e2e-status` 브랜치 PR 머지
+2. GitHub Secrets 설정(`WIF_PROVIDER`, `WIF_SERVICE_ACCOUNT`) 후 `deploy-cloud-run` 재실행
+3. `/healthz` 404 원인 분석/수정
+4. Cloud SQL 연동 후 `/db/healthz`를 200으로 전환
