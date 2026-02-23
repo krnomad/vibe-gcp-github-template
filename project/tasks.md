@@ -24,6 +24,8 @@
   - `main` branch protection(required check: `unit-test`, approvals: `0`)
 - [x] PR 생성/머지 흐름 확인
   - PR #1에서 `unit-test` 성공 후 squash merge 완료
+- [x] `deploy.yml` 트리거 보강 반영
+  - `main push` + merged PR(closed) 이벤트에서 배포 실행
 
 ## 진행 중 / 다음 작업
 
