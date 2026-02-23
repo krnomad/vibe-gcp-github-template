@@ -95,7 +95,7 @@ gcloud iam workload-identity-pools providers describe "$WIF_PROVIDER" \
 2. `Settings > Branches > Branch protection rules (main)`
    - `Require a pull request before merging` 활성화
    - `Require status checks to pass before merging` 활성화
-   - Required checks: `ci-pr / unit-test`
+   - Required checks: `unit-test`
    - 승인 리뷰 수: 0 (리뷰 없이 체크만)
    - `main` 직접 push 차단(권장)
 

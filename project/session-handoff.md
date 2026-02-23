@@ -1,6 +1,6 @@
 # Session Handoff
 
-작성시각: 2026-02-24 00:56:51 KST
+작성시각: 2026-02-24 01:06:27 KST
 
 ## 1) 지금 바로 알아야 할 상태
 
@@ -11,11 +11,12 @@
   - URL: `https://fastapi-backend-gddhqf47hq-du.a.run.app`
   - 최신 리비전: `fastapi-backend-00002-dvk` (트래픽 100%)
 - 저장소
-  - 작업 브랜치: `feat/pr-auto-merge-deploy-pipeline`
-  - 파이프라인 파일
-    - `.github/workflows/ci-pr.yml`
-    - `.github/workflows/auto-merge.yml`
-    - `.github/workflows/deploy.yml` (배포 전용)
+  - `main`에 PR 기반 파이프라인 반영 완료
+    - `ci-pr.yml`
+    - `auto-merge.yml`
+    - `deploy.yml` (배포 전용)
+  - 머지 PR: `https://github.com/krnomad/vibe-gcp-github-template/pull/1`
+  - 머지 커밋: `040141fa87d47ff82925ee390737c7ba43ccb6c4`
 
 ## 2) 엔드포인트 확인 결과
 
@@ -37,12 +38,12 @@
 ```bash
 git status --short --branch
 git log --oneline -n 5
+gh run list --workflow deploy.yml --limit 5
 gcloud run services describe fastapi-backend --region asia-northeast3 --project vibe-fastapi-dev --format='value(status.url,status.latestReadyRevisionName)'
 ```
 
 ## 5) 다음 작업 우선순위
 
-1. GitHub 저장소 설정 적용 (`Allow auto-merge`, `Allow squash merging`, `main` branch protection)
-2. PR 생성 후 `ci-pr` -> auto-merge -> `deploy-cloud-run` end-to-end 검증
-3. `/healthz` 404 원인 분석/수정
-4. Cloud SQL 연동 후 `/db/healthz`를 200으로 전환
+1. GitHub Secrets 설정(`WIF_PROVIDER`, `WIF_SERVICE_ACCOUNT`) 후 `deploy-cloud-run` 재실행
+2. `/healthz` 404 원인 분석/수정
+3. Cloud SQL 연동 후 `/db/healthz`를 200으로 전환
