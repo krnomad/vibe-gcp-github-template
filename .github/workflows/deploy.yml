@@ -1,0 +1,93 @@
+name: deploy-cloud-run
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Run tests
+        run: uv run pytest -q
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Build and push image
+        env:
+          IMAGE_URI: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPOSITORY }}/${{ vars.CLOUD_RUN_SERVICE }}:${{ github.sha }}
+        run: |
+          docker build -t "$IMAGE_URI" .
+          docker push "$IMAGE_URI"
+          echo "IMAGE_URI=$IMAGE_URI" >> "$GITHUB_ENV"
+
+      - name: Deploy Cloud Run
+        env:
+          CLOUD_RUN_RUNTIME_SA: ${{ vars.CLOUD_RUN_RUNTIME_SA }}
+          INSTANCE_CONNECTION_NAME: ${{ vars.INSTANCE_CONNECTION_NAME }}
+          DB_NAME: ${{ vars.DB_NAME }}
+          DB_USER: ${{ vars.DB_USER }}
+          DB_PASSWORD_SECRET: ${{ vars.DB_PASSWORD_SECRET }}
+        run: |
+          set -euo pipefail
+
+          DEPLOY_ARGS=(
+            --project "${{ vars.GCP_PROJECT_ID }}"
+            --region "${{ vars.GCP_REGION }}"
+            --platform managed
+            --image "$IMAGE_URI"
+            --allow-unauthenticated
+          )
+
+          if [[ -n "$CLOUD_RUN_RUNTIME_SA" ]]; then
+            DEPLOY_ARGS+=(--service-account "$CLOUD_RUN_RUNTIME_SA")
+          fi
+
+          if [[ -n "$INSTANCE_CONNECTION_NAME" ]]; then
+            : "${DB_NAME:?DB_NAME GitHub variable is required when INSTANCE_CONNECTION_NAME is set}"
+            : "${DB_USER:?DB_USER GitHub variable is required when INSTANCE_CONNECTION_NAME is set}"
+            : "${DB_PASSWORD_SECRET:?DB_PASSWORD_SECRET GitHub variable is required when INSTANCE_CONNECTION_NAME is set}"
+            DEPLOY_ARGS+=(--add-cloudsql-instances "$INSTANCE_CONNECTION_NAME")
+            DEPLOY_ARGS+=(--set-env-vars "APP_ENV=prod,DB_NAME=$DB_NAME,DB_USER=$DB_USER,INSTANCE_CONNECTION_NAME=$INSTANCE_CONNECTION_NAME")
+            DEPLOY_ARGS+=(--set-secrets "DB_PASSWORD=$DB_PASSWORD_SECRET:latest")
+          else
+            DEPLOY_ARGS+=(--set-env-vars "APP_ENV=prod")
+          fi
+
+          gcloud run deploy "${{ vars.CLOUD_RUN_SERVICE }}" "${DEPLOY_ARGS[@]}"
