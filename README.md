@@ -3,7 +3,7 @@
 이 저장소는 아래 3단계를 한 번에 실습할 수 있도록 구성되어 있습니다.
 
 1. FastAPI를 Cloud Run에 수동 배포
-2. `main` 브랜치 push 시 GitHub Actions로 자동 배포
+2. PR 테스트 통과 후 자동 머지 + `main` 머지 시 자동 배포
 3. Cloud SQL(Postgres) 연동 + Alembic 마이그레이션
 
 ## Start Here (템플릿 운용 문서)
@@ -124,9 +124,28 @@ gcloud run deploy "${SERVICE_NAME}" \
   --allow-unauthenticated
 ```
 
-## 3) GitHub Actions 자동 배포 (2단계)
+## 3) GitHub Actions 자동화 (2단계)
 
-`.github/workflows/deploy.yml`는 `main` push 시 테스트 후 배포합니다.
+2단계는 아래 3개 워크플로우로 동작합니다.
+
+- `.github/workflows/ci-pr.yml`
+  - `pull_request` 이벤트에서 테스트 수행
+- `.github/workflows/auto-merge.yml`
+  - 같은 저장소 브랜치 PR에 대해 auto-merge(squash) 활성화
+- `.github/workflows/deploy.yml`
+  - `main` 브랜치 push(= 머지 완료) 시 Cloud Run 배포
+
+GitHub 저장소에서 아래 설정을 먼저 적용하세요.
+
+1. `Settings > General`
+   - `Allow auto-merge` 활성화
+   - `Allow squash merging` 활성화
+2. `Settings > Branches > Branch protection rules (main)`
+   - `Require a pull request before merging` 활성화
+   - `Require status checks to pass before merging` 활성화
+   - Required checks: `ci-pr / unit-test`
+   - Approvals: 0 (리뷰 없이 체크만)
+   - 직접 `main` push 차단(권장)
 
 GitHub 저장소에 아래 값을 등록하세요.
 
@@ -146,6 +165,13 @@ GitHub 저장소에 아래 값을 등록하세요.
 - `DB_NAME`
 - `DB_USER`
 - `DB_PASSWORD_SECRET` (Secret Manager secret name)
+
+동작 검증 순서:
+
+1. 기능 브랜치 생성 후 PR 생성
+2. `ci-pr` 워크플로우에서 `unit-test` 성공 확인
+3. PR이 auto-merge로 squash 머지되는지 확인
+4. 머지 직후 `deploy-cloud-run` 워크플로우 실행/성공 확인
 
 ## 4) Cloud SQL(Postgres) 연결 + 마이그레이션 (3단계)
 

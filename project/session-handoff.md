@@ -1,6 +1,6 @@
 # Session Handoff
 
-작성시각: 2026-02-24 00:39:41 KST
+작성시각: 2026-02-24 00:56:51 KST
 
 ## 1) 지금 바로 알아야 할 상태
 
@@ -11,9 +11,11 @@
   - URL: `https://fastapi-backend-gddhqf47hq-du.a.run.app`
   - 최신 리비전: `fastapi-backend-00002-dvk` (트래픽 100%)
 - 저장소
-  - 브랜치: `main`
-  - 최신 커밋: `636646d`
-  - 원격 추적: `origin2/main`
+  - 작업 브랜치: `feat/pr-auto-merge-deploy-pipeline`
+  - 파이프라인 파일
+    - `.github/workflows/ci-pr.yml`
+    - `.github/workflows/auto-merge.yml`
+    - `.github/workflows/deploy.yml` (배포 전용)
 
 ## 2) 엔드포인트 확인 결과
 
@@ -40,6 +42,7 @@ gcloud run services describe fastapi-backend --region asia-northeast3 --project 
 
 ## 5) 다음 작업 우선순위
 
-1. `/healthz` 404 원인 분석/수정
-2. GitHub Actions OIDC/WIF end-to-end 검증
-3. Cloud SQL 연동 후 `/db/healthz`를 200으로 전환
+1. GitHub 저장소 설정 적용 (`Allow auto-merge`, `Allow squash merging`, `main` branch protection)
+2. PR 생성 후 `ci-pr` -> auto-merge -> `deploy-cloud-run` end-to-end 검증
+3. `/healthz` 404 원인 분석/수정
+4. Cloud SQL 연동 후 `/db/healthz`를 200으로 전환
