@@ -17,6 +17,76 @@
 
 에이전트 실행 규칙은 `AGENTS.md`에 정리되어 있습니다.
 
+## 10분 Quickstart (신규 프로젝트 기준)
+
+아래 순서대로 실행하면 템플릿 초기 세팅과 1단계 배포까지 빠르게 진행할 수 있습니다.
+
+1. 저장소 클론 + 기본 도구 확인
+```bash
+git clone https://github.com/krnomad/vibe-gcp-github-template.git
+cd vibe-gcp-github-template
+gcloud --version
+uv --version
+```
+
+2. 변수 설정
+```bash
+export PROJECT_ID="YOUR_PROJECT_ID"
+export REGION="asia-northeast3"
+export SERVICE_NAME="fastapi-backend"
+export REPO_NAME="fastapi"
+```
+
+3. GCP 부트스트랩 실행 (`docs/gcp-project-bootstrap.md` 기준)
+```bash
+gcloud config set project "$PROJECT_ID"
+gcloud services enable \
+  run.googleapis.com \
+  artifactregistry.googleapis.com \
+  cloudbuild.googleapis.com \
+  iamcredentials.googleapis.com \
+  secretmanager.googleapis.com \
+  --project "$PROJECT_ID"
+
+gcloud artifacts repositories create "$REPO_NAME" \
+  --repository-format=docker \
+  --location="$REGION" \
+  --description="Template images" \
+  --project "$PROJECT_ID"
+```
+
+4. Cloud Run 수동 배포 (1단계)
+```bash
+IMAGE_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${SERVICE_NAME}:manual-$(date +%Y%m%d%H%M%S)"
+
+# 기본 경로 (Cloud Build)
+gcloud builds submit --project "$PROJECT_ID" --tag "$IMAGE_URI" .
+
+# Cloud Build 권한 제한 시 대체
+# docker buildx build --platform linux/amd64 -t "$IMAGE_URI" --push .
+
+gcloud run deploy "$SERVICE_NAME" \
+  --project "$PROJECT_ID" \
+  --region "$REGION" \
+  --platform managed \
+  --image "$IMAGE_URI" \
+  --allow-unauthenticated \
+  --set-env-vars APP_ENV=prod
+```
+
+5. 배포 확인
+```bash
+SERVICE_URL="$(gcloud run services describe "$SERVICE_NAME" --region "$REGION" --project "$PROJECT_ID" --format='value(status.url)')"
+echo "$SERVICE_URL"
+curl "$SERVICE_URL/"
+curl "$SERVICE_URL/openapi.json"
+```
+
+다음 단계:
+
+1. GitHub Actions + WIF 연동: `docs/github-actions-wif.md`
+2. 상세 명령 레퍼런스: `docs/gcp-setup.md`
+
 ## 1) 로컬 실행
 
 사전 요구사항:
