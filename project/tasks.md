@@ -19,12 +19,16 @@
   - `README.md`, `docs/00-start-here.md`, `docs/github-actions-wif.md`
 - [x] 워크플로우 YAML 파싱/앱 스모크 검증
   - YAML load 성공, `GET /`/`GET /healthz` 200 확인
+- [x] GitHub 저장소 설정 적용
+  - `Allow auto-merge`, `Allow squash merging`, `delete branch on merge`
+  - `main` branch protection(required check: `unit-test`, approvals: `0`)
+- [x] PR 생성/머지 흐름 확인
+  - PR #1에서 `unit-test` 성공 후 squash merge 완료
 
 ## 진행 중 / 다음 작업
 
-- [ ] GitHub 저장소 설정 적용
-  - `Allow auto-merge`, `Allow squash merging`, `main` branch protection(required check: `ci-pr / unit-test`)
-- [ ] PR 생성 후 auto-merge -> `main` 머지 -> `deploy-cloud-run` end-to-end 검증
+- [ ] `deploy-cloud-run` 인증 실패 원인 수정 후 end-to-end 성공 검증
+  - run id `22314120424`: `WIF_PROVIDER`/`WIF_SERVICE_ACCOUNT` 미설정으로 auth 단계 실패
 - [ ] `/healthz` 404 원인 분석 및 수정
 - [ ] Cloud Build `PERMISSION_DENIED` 원인 확정(권한/조직정책)
 - [ ] Cloud SQL + Secret Manager + `/db/healthz` 200 검증(3단계)

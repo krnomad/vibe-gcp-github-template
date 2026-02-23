@@ -143,7 +143,7 @@ GitHub 저장소에서 아래 설정을 먼저 적용하세요.
 2. `Settings > Branches > Branch protection rules (main)`
    - `Require a pull request before merging` 활성화
    - `Require status checks to pass before merging` 활성화
-   - Required checks: `ci-pr / unit-test`
+   - Required checks: `unit-test`
    - Approvals: 0 (리뷰 없이 체크만)
    - 직접 `main` push 차단(권장)
 
