@@ -1,6 +1,6 @@
 # Progress
 
-작성일시: 2026-02-24 01:17:36 KST
+작성일시: 2026-02-24 01:19:48 KST
 
 ## 현재 상태 요약
 
@@ -12,9 +12,9 @@
 - 2단계(PR CI -> auto-merge -> merge 후 배포) 파이프라인 코드가 `main`에 반영됨
   - 머지 커밋: `040141fa87d47ff82925ee390737c7ba43ccb6c4`
   - PR: `https://github.com/krnomad/vibe-gcp-github-template/pull/1`
-- 배포 트리거 보강(`push` + `workflow_run(ci-pr 성공)`) 변경을 진행 중
-  - 머지 커밋: `6683cf966ff37e78ab6a9f73cdd99f81d8cf59f0`
-  - PR: `https://github.com/krnomad/vibe-gcp-github-template/pull/4`
+- 배포 트리거 보강(`push` + `workflow_run(ci-pr 성공)`) 변경이 `main`에 반영됨
+  - 머지 커밋: `42f4f906b0244e5d9a37f0ecf10cb1f961dff791`
+  - PR: `https://github.com/krnomad/vibe-gcp-github-template/pull/6`
 - GitHub 저장소 설정 적용 완료
   - `allow_auto_merge=true`
   - `allow_squash_merge=true`
@@ -52,6 +52,7 @@
   - PR #2 머지에서는 `push`/`merged PR(closed)` 기반 `deploy-cloud-run`이 트리거되지 않음
   - 재발 방지를 위해 `workflow_run(ci-pr 성공)` 기반 배포 경로 추가 진행
   - PR #4 `MERGED` 확인(트리거 보강 코드 반영)
+  - PR #6 `MERGED` 확인(`workflow_run` 기반 배포 경로 반영)
 
 ## 배포 중 이슈/해결(누적)
 
