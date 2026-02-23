@@ -6,6 +6,17 @@
 2. `main` 브랜치 push 시 GitHub Actions로 자동 배포
 3. Cloud SQL(Postgres) 연동 + Alembic 마이그레이션
 
+## Start Here (템플릿 운용 문서)
+
+아래 문서 순서대로 확인한 뒤 작업을 진행하세요.
+
+1. `docs/00-start-here.md`
+2. `docs/gcp-project-bootstrap.md`
+3. `docs/github-actions-wif.md`
+4. `docs/gcp-setup.md`
+
+에이전트 실행 규칙은 `AGENTS.md`에 정리되어 있습니다.
+
 ## 1) 로컬 실행
 
 사전 요구사항:

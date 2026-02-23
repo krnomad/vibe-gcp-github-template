@@ -1,0 +1,99 @@
+# GitHub Actions + WIF (OIDC)
+
+작성일: 2026-02-24 (KST)
+
+GitHub Actions에서 장기 키 없이 GCP에 배포하기 위한 OIDC/WIF 가이드.
+
+## 0) 전제
+
+- `docs/gcp-project-bootstrap.md` 완료
+- GitHub 저장소 생성 완료
+- 배포 대상 브랜치: `main`
+
+## 1) 변수 정의
+
+```bash
+export PROJECT_ID="YOUR_PROJECT_ID"
+export PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
+
+export GH_OWNER="YOUR_GITHUB_OWNER"
+export GH_REPO="YOUR_GITHUB_REPO"
+
+export WIF_POOL="github-pool"
+export WIF_PROVIDER="github-provider"
+export DEPLOY_SA="github-deployer"
+export DEPLOY_SA_EMAIL="${DEPLOY_SA}@${PROJECT_ID}.iam.gserviceaccount.com"
+```
+
+## 2) WIF Pool/Provider 생성
+
+```bash
+gcloud iam workload-identity-pools create "$WIF_POOL" \
+  --location="global" \
+  --display-name="GitHub Pool" \
+  --project "$PROJECT_ID"
+
+gcloud iam workload-identity-pools providers create-oidc "$WIF_PROVIDER" \
+  --location="global" \
+  --workload-identity-pool="$WIF_POOL" \
+  --display-name="GitHub Provider" \
+  --issuer-uri="https://token.actions.githubusercontent.com" \
+  --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.ref=assertion.ref" \
+  --attribute-condition="assertion.repository=='${GH_OWNER}/${GH_REPO}'" \
+  --project "$PROJECT_ID"
+```
+
+## 3) GitHub OIDC 주체에 SA 권한 부여
+
+```bash
+export WIF_POOL_NAME="projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${WIF_POOL}"
+
+gcloud iam service-accounts add-iam-policy-binding "$DEPLOY_SA_EMAIL" \
+  --role="roles/iam.workloadIdentityUser" \
+  --member="principalSet://iam.googleapis.com/${WIF_POOL_NAME}/attribute.repository/${GH_OWNER}/${GH_REPO}" \
+  --project "$PROJECT_ID"
+```
+
+## 4) GitHub 설정값 매핑
+
+Secrets:
+
+- `WIF_PROVIDER`: provider full resource name
+- `WIF_SERVICE_ACCOUNT`: deploy service account email
+
+Variables:
+
+- `GCP_PROJECT_ID`
+- `GCP_REGION`
+- `ARTIFACT_REPOSITORY`
+- `CLOUD_RUN_SERVICE`
+- `CLOUD_RUN_RUNTIME_SA`
+
+DB 연동 시 추가 Variables:
+
+- `INSTANCE_CONNECTION_NAME`
+- `DB_NAME`
+- `DB_USER`
+- `DB_PASSWORD_SECRET`
+
+## 5) provider resource name 조회
+
+```bash
+gcloud iam workload-identity-pools providers describe "$WIF_PROVIDER" \
+  --workload-identity-pool="$WIF_POOL" \
+  --location="global" \
+  --project "$PROJECT_ID" \
+  --format="value(name)"
+```
+
+## 6) 동작 검증
+
+1. `main` 브랜치에 push
+2. GitHub Actions `deploy-cloud-run` 워크플로우 성공 확인
+3. Cloud Run 최신 리비전 반영 확인
+
+## 7) 트러블슈팅 메모
+
+- `PERMISSION_DENIED`: SA 역할/바인딩 누락 여부 확인
+- `unauthorized` on auth step: `WIF_PROVIDER` 값이 full resource name인지 확인
+- 배포 실패: 이미지 아키텍처(`linux/amd64`) 및 런타임 env 확인
