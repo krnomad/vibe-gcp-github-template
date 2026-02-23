@@ -1,6 +1,6 @@
 # Progress
 
-작성일시: 2026-02-24 01:06:27 KST
+작성일시: 2026-02-24 01:11:02 KST
 
 ## 현재 상태 요약
 
@@ -23,7 +23,7 @@
 - 워크플로우 분리/배포
   - `ci-pr.yml`: `pull_request` 테스트
   - `auto-merge.yml`: `pull_request_target`에서 auto-merge 예약
-  - `deploy.yml`: `push` to `main` 배포 전용
+  - `deploy.yml`: `push` to `main` + merged PR(closed) 이벤트 배포로 보강
 - 문서 동기화
   - `README.md`
   - `docs/00-start-here.md`
@@ -45,6 +45,8 @@
   - PR #1 `MERGED` 확인
   - `deploy-cloud-run` 실행됨(run id: `22314120424`)
   - 배포는 인증 단계 실패(아래 실패 로그 참고)
+  - PR #2 `MERGED` 확인(`auto-merge-pr`/`ci-pr` 성공)
+  - PR #2 머지에서는 `push` 기반 `deploy-cloud-run`이 트리거되지 않음(재발 방지를 위해 `deploy.yml` 트리거 보강)
 
 ## 배포 중 이슈/해결(누적)
 
@@ -77,6 +79,7 @@
 1. GitHub Secrets 설정
    - `WIF_PROVIDER` (provider full resource name)
    - `WIF_SERVICE_ACCOUNT` (deploy SA email)
-2. `deploy-cloud-run` 재실행 또는 신규 커밋 push로 재검증
+2. `deploy-cloud-run` 재실행 또는 신규 PR 머지로 재검증
+   - `deploy.yml`의 merged PR(closed) 트리거 경로 동작 확인 필요
 3. `/healthz` 404 원인 문서화/경로 조정
 4. Cloud SQL + Secret Manager 연동 후 `/db/healthz` 200 검증
