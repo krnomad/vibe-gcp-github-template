@@ -21,7 +21,7 @@
 
 1. 목표와 범위 확정
    - 1단계: Cloud Run 수동 배포
-   - 2단계: GitHub Actions 자동 배포
+   - 2단계: PR 테스트 + auto-merge + `main` 머지 후 자동 배포
    - 3단계: Cloud SQL + Alembic
 2. 환경 변수 템플릿 준비
    - `PROJECT_ID`, `REGION`, `SERVICE_NAME`, `REPO_NAME`
@@ -33,6 +33,8 @@
 
 - `gcloud` 명령 실행 전, 항상 `docs/gcp-project-bootstrap.md`의 변수 블록을 먼저 확인
 - GitHub Actions 관련 변경 전, `docs/github-actions-wif.md`의 Secret/Variable 매핑을 먼저 확인
+- `main` 직접 push 대신 기능 브랜치 + PR 흐름을 기본으로 사용
+- 2단계에서는 브랜치 보호 규칙의 required check를 `ci-pr / unit-test`로 유지
 - 작업 후에는 `project/progress.md`와 `project/tasks.md`를 최신화
 
 ## 다음 문서

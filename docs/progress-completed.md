@@ -43,3 +43,13 @@
 - Python 문법 컴파일 확인 완료
   - `app/`, `alembic/`, `tests/` 대상 `compileall` 통과
 - GitHub Actions 워크플로우 YAML 파싱 확인 완료
+
+## 7. 2단계 파이프라인 개선 (2026-02-24)
+- PR 기반 CI/머지/배포 흐름으로 워크플로우 분리
+  - `ci-pr.yml`: PR 테스트
+  - `auto-merge.yml`: PR auto-merge(squash) 예약
+  - `deploy.yml`: `main` push(머지 완료) 시 배포
+- 관련 문서 업데이트
+  - `README.md`
+  - `docs/00-start-here.md`
+  - `docs/github-actions-wif.md`
