@@ -67,6 +67,10 @@
   - 상황: `deploy-cloud-run` run id `22314120424`의 `Authenticate to Google Cloud` 단계 실패
   - 원인: GitHub Secrets `WIF_PROVIDER`, `WIF_SERVICE_ACCOUNT` 미설정(또는 주입 실패)
   - 해결: 저장소 Secrets 등록 후 `deploy-cloud-run` 재실행 필요
+- 로그: `zsh:1: command not found: unit-test`
+  - 상황: `gh pr create` 본문 문자열에 백틱(`unit-test`)을 큰따옴표로 전달
+  - 원인: zsh command substitution
+  - 해결: 본문 문자열의 백틱 이스케이프 또는 single-quote 사용 필요
 
 ## 다음 작업
 
