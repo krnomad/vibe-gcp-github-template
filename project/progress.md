@@ -1,6 +1,6 @@
 # Progress
 
-작성일시: 2026-02-24 01:13:52 KST
+작성일시: 2026-02-24 01:17:36 KST
 
 ## 현재 상태 요약
 
@@ -12,7 +12,7 @@
 - 2단계(PR CI -> auto-merge -> merge 후 배포) 파이프라인 코드가 `main`에 반영됨
   - 머지 커밋: `040141fa87d47ff82925ee390737c7ba43ccb6c4`
   - PR: `https://github.com/krnomad/vibe-gcp-github-template/pull/1`
-- 배포 트리거 보강(`push` + merged PR closed) 변경이 `main`에 반영됨
+- 배포 트리거 보강(`push` + `workflow_run(ci-pr 성공)`) 변경을 진행 중
   - 머지 커밋: `6683cf966ff37e78ab6a9f73cdd99f81d8cf59f0`
   - PR: `https://github.com/krnomad/vibe-gcp-github-template/pull/4`
 - GitHub 저장소 설정 적용 완료
@@ -26,7 +26,7 @@
 - 워크플로우 분리/배포
   - `ci-pr.yml`: `pull_request` 테스트
   - `auto-merge.yml`: `pull_request_target`에서 auto-merge 예약
-  - `deploy.yml`: `push` to `main` + merged PR(closed) 이벤트 배포로 보강
+  - `deploy.yml`: `push` to `main` + `workflow_run(ci-pr 성공)` 기반 배포로 보강
 - 문서 동기화
   - `README.md`
   - `docs/00-start-here.md`
@@ -49,7 +49,8 @@
   - `deploy-cloud-run` 실행됨(run id: `22314120424`)
   - 배포는 인증 단계 실패(아래 실패 로그 참고)
   - PR #2 `MERGED` 확인(`auto-merge-pr`/`ci-pr` 성공)
-  - PR #2 머지에서는 `push` 기반 `deploy-cloud-run`이 트리거되지 않음(재발 방지를 위해 `deploy.yml` 트리거 보강)
+  - PR #2 머지에서는 `push`/`merged PR(closed)` 기반 `deploy-cloud-run`이 트리거되지 않음
+  - 재발 방지를 위해 `workflow_run(ci-pr 성공)` 기반 배포 경로 추가 진행
   - PR #4 `MERGED` 확인(트리거 보강 코드 반영)
 
 ## 배포 중 이슈/해결(누적)
@@ -84,6 +85,6 @@
    - `WIF_PROVIDER` (provider full resource name)
    - `WIF_SERVICE_ACCOUNT` (deploy SA email)
 2. `deploy-cloud-run` 재실행 또는 신규 PR 머지로 재검증
-   - `deploy.yml`의 merged PR(closed) 트리거 경로 동작 확인 필요
+   - `deploy.yml`의 `workflow_run(ci-pr 성공)` 경로 동작 확인 필요
 3. `/healthz` 404 원인 문서화/경로 조정
 4. Cloud SQL + Secret Manager 연동 후 `/db/healthz` 200 검증

@@ -4,49 +4,100 @@ on:
   push:
     branches:
       - main
-  pull_request_target:
-    branches:
-      - main
+  workflow_run:
+    workflows:
+      - ci-pr
     types:
-      - closed
+      - completed
 
 permissions:
   contents: read
   id-token: write
+  pull-requests: read
 
 jobs:
   deploy:
     if: >-
       github.event_name == 'push' ||
-      (github.event_name == 'pull_request_target' && github.event.pull_request.merged == true)
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     steps:
+      - name: Resolve deployment target
+        id: resolve
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          RUN_PR_NUMBER: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.pull_requests[0].number || '' }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$EVENT_NAME" == "push" ]]; then
+            echo "target_sha=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+            echo "should_deploy=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ -z "$RUN_PR_NUMBER" ]]; then
+            echo "No PR attached to workflow_run; skip deploy."
+            echo "should_deploy=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          for _ in {1..30}; do
+            PR_JSON="$(gh pr view "$RUN_PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json mergedAt,baseRefName,mergeCommit --jq '{mergedAt,baseRefName,mergeCommit:(.mergeCommit.oid // "")}' )"
+            MERGED_AT="$(jq -r '.mergedAt // ""' <<<"$PR_JSON")"
+            BASE_REF="$(jq -r '.baseRefName' <<<"$PR_JSON")"
+            MERGE_SHA="$(jq -r '.mergeCommit' <<<"$PR_JSON")"
+
+            if [[ -n "$MERGED_AT" ]]; then
+              if [[ "$BASE_REF" == "main" && -n "$MERGE_SHA" ]]; then
+                echo "target_sha=$MERGE_SHA" >> "$GITHUB_OUTPUT"
+                echo "should_deploy=true" >> "$GITHUB_OUTPUT"
+              else
+                echo "Merged PR base is not main; skip deploy."
+                echo "should_deploy=false" >> "$GITHUB_OUTPUT"
+              fi
+              exit 0
+            fi
+
+            sleep 5
+          done
+
+          echo "PR merge not detected within wait window; skip deploy."
+          echo "should_deploy=false" >> "$GITHUB_OUTPUT"
+
       - name: Checkout
+        if: steps.resolve.outputs.should_deploy == 'true'
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.merge_commit_sha || github.sha }}
+          ref: ${{ steps.resolve.outputs.target_sha }}
 
       - name: Authenticate to Google Cloud
+        if: steps.resolve.outputs.should_deploy == 'true'
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
       - name: Set up gcloud
+        if: steps.resolve.outputs.should_deploy == 'true'
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Configure Docker for Artifact Registry
+        if: steps.resolve.outputs.should_deploy == 'true'
         run: gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev --quiet
 
       - name: Build and push image
+        if: steps.resolve.outputs.should_deploy == 'true'
         env:
-          IMAGE_URI: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPOSITORY }}/${{ vars.CLOUD_RUN_SERVICE }}:${{ github.event_name == 'pull_request_target' && github.event.pull_request.merge_commit_sha || github.sha }}
+          IMAGE_URI: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPOSITORY }}/${{ vars.CLOUD_RUN_SERVICE }}:${{ steps.resolve.outputs.target_sha }}
         run: |
           docker build -t "$IMAGE_URI" .
           docker push "$IMAGE_URI"
           echo "IMAGE_URI=$IMAGE_URI" >> "$GITHUB_ENV"
 
       - name: Deploy Cloud Run
+        if: steps.resolve.outputs.should_deploy == 'true'
         env:
           CLOUD_RUN_RUNTIME_SA: ${{ vars.CLOUD_RUN_RUNTIME_SA }}
           INSTANCE_CONNECTION_NAME: ${{ vars.INSTANCE_CONNECTION_NAME }}
