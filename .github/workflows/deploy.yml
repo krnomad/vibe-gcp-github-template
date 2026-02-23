@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+  pull_request_target:
+    branches:
+      - main
+    types:
+      - closed
 
 permissions:
   contents: read
@@ -11,10 +16,15 @@ permissions:
 
 jobs:
   deploy:
+    if: >-
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request_target' && github.event.pull_request.merged == true)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.merge_commit_sha || github.sha }}
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -30,7 +40,7 @@ jobs:
 
       - name: Build and push image
         env:
-          IMAGE_URI: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPOSITORY }}/${{ vars.CLOUD_RUN_SERVICE }}:${{ github.sha }}
+          IMAGE_URI: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPOSITORY }}/${{ vars.CLOUD_RUN_SERVICE }}:${{ github.event_name == 'pull_request_target' && github.event.pull_request.merge_commit_sha || github.sha }}
         run: |
           docker build -t "$IMAGE_URI" .
           docker push "$IMAGE_URI"
